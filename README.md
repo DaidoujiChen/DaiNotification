@@ -18,9 +18,9 @@ daidoujichen@gmail.com
 + (void)show:(UIView *(^)(void))view notificationDuration:(NSTimeInterval)duration whenClicked:(void (^)(void))clicked;
 `````
 
-	- view, 在這個 block 裡面傳回你想秀在畫面上的通知
-	- duration, 這則通知顯示在畫面上的時間
-	- clicked, 當通知被點擊時, 所要做出的回應
+- view, 在這個 block 裡面傳回你想秀在畫面上的通知
+- duration, 這則通知顯示在畫面上的時間
+- clicked, 當通知被點擊時, 所要做出的回應
 
 簡單的例子可以像是這樣
 
@@ -44,7 +44,7 @@ daidoujichen@gmail.com
 
 比上面多出來的參數為
 
-	- delay, 可以設定當前這個通知秀完之後, 幾秒後才可以顯示下一個
+- delay, 可以設定當前這個通知秀完之後, 幾秒後才可以顯示下一個
 
 用同樣簡單的例子來說的話就是
 
@@ -63,7 +63,7 @@ for (NSInteger index = 0; index < 100; index++) {
 則可以把通知間隔開來.
 
 ## TODO
-	- clicked block 內應該有
+- clicked block 內應該有暫停通知的方法, 延伸而來的, 就需要另一個重新啟動通知的方法
 
 
 
