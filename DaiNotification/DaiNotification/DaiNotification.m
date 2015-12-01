@@ -15,7 +15,7 @@
 #pragma mark - Class Method
 
 + (void)show:(UIView *(^)(void))view notificationDuration:(NSTimeInterval)duration whenClicked:(void (^)(void))clicked {
-    [self show:view notificationDuration:duration whenClicked:clicked];
+    [self show:view notificationDuration:duration whenClicked:clicked delayForNext:0];
 }
 
 + (void)show:(UIView *(^)(void))view notificationDuration:(NSTimeInterval)duration whenClicked:(void (^)(void))clicked delayForNext:(NSTimeInterval)delay {
@@ -28,7 +28,7 @@
     NSMapTable *newMapTable = [NSMapTable mapTableWithKeyOptions:NSPointerFunctionsCopyIn valueOptions:NSPointerFunctionsCopyIn];
     [newMapTable setObject:view forKey:@"view"];
     [newMapTable setObject:@(duration) forKey:@"duration"];
-    if (!clicked) {
+    if (clicked) {
         [newMapTable setObject:clicked forKey:@"clicked"];
     }
     
