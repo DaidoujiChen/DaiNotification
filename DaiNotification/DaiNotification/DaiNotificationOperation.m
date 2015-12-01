@@ -8,7 +8,7 @@
 
 #import "DaiNotificationOperation.h"
 #import <UIKit/UIKit.h>
-#import <objc/runtime.h>
+#import "DaiNotificationOperation+Location.h"
 
 @interface DaiNotificationOperation ()
 
@@ -19,11 +19,15 @@
 // 由外部代入的對應表, 其中包含需要顯示的畫面, 停留時間, 被點擊時的動作
 @property (nonatomic, strong) NSMapTable *mapTable;
 @property (nonatomic, readonly) UIView *view;
+@property (nonatomic, strong) UIView *internalView;
 @property (nonatomic, readonly) NSTimeInterval duration;
 @property (nonatomic, readonly) void (^clicked)(void);
 
 // 顯示用的 window
 @property (nonatomic, strong) DaiNotificationWindow *notificationWindow;
+
+// 紀錄前一次 pan 的位置
+@property (nonatomic, assign) CGPoint previousLocation;
 
 @end
 
@@ -42,14 +46,14 @@
 
 #pragma mark - Private Instance Method
 
-#pragma mark * Fest Access Current Object, Readonly
+#pragma mark * Fast Access Current Object, Readonly
 
 // 唯讀, 取得使用者自定義 view 一次
 - (UIView *)view {
-    if (!objc_getAssociatedObject(self, _cmd)) {
-        objc_setAssociatedObject(self, _cmd, [self userCustomView], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    if (!self.internalView) {
+        self.internalView = [self userCustomView];
     }
-    return objc_getAssociatedObject(self, _cmd);
+    return self.internalView;
 }
 
 // 唯讀, 取得使用者自定義通知出現時間
@@ -76,18 +80,12 @@
         [weakSelf.notificationWindow makeKeyAndVisible];
         
         // 將使用者客製 view 放到正確位置
-        UIView *view = weakSelf.view;
-        CGFloat screenWidth = CGRectGetWidth([UIScreen mainScreen].bounds);
-        CGFloat viewWidth = CGRectGetWidth(view.bounds);
-        CGFloat viewHeight = CGRectGetHeight(view.bounds);
-        CGRect newFrame = view.frame;
-        newFrame.origin = CGPointMake((screenWidth - viewWidth) / 2, -viewHeight);
-        view.frame = newFrame;
-        [weakSelf.notificationWindow addSubview:view];
+        weakSelf.view.frame = [weakSelf notificationDismissFrame:weakSelf.view.frame];
+        [weakSelf.notificationWindow addSubview:weakSelf.view];
     });
 }
 
-#pragma mark * 為使用者客製的 view 添加手勢動作
+#pragma mark * 在通知上添加手勢動作
 
 // 修改使用者傳入的 view
 - (UIView *)userCustomView {
@@ -95,7 +93,7 @@
     UIView *view = viewBlock();
     [self disableUserInteractionOn:view];
     view.userInteractionEnabled = YES;
-    UITapGestureRecognizer *tapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onClicked)];
+    UITapGestureRecognizer *tapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onTap:)];
     [view addGestureRecognizer:tapGestureRecognizer];
     UIPanGestureRecognizer *panGestureRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(onPan:)];
     [view addGestureRecognizer:panGestureRecognizer];
@@ -111,11 +109,13 @@
 }
 
 // 點擊通知觸發的手勢效果
-- (void)onClicked {
+- (void)onTap:(UITapGestureRecognizer *)tapGestureRecognizer {
     __weak DaiNotificationOperation *weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         [weakSelf fadeOut];
-        weakSelf.clicked();
+        if (weakSelf.clicked) {
+            weakSelf.clicked();
+        }
     });
 }
 
@@ -124,32 +124,32 @@
     __weak DaiNotificationOperation *weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         [NSObject cancelPreviousPerformRequestsWithTarget:weakSelf selector:@selector(dismiss) object:nil];
-
-        CGPoint previousLocation = objc_getAssociatedObject(weakSelf, _cmd) ? [objc_getAssociatedObject(weakSelf, _cmd) CGPointValue] : CGPointZero;
-        if (panGestureRecognizer.state == UIGestureRecognizerStateBegan) {
-            previousLocation = [panGestureRecognizer locationInView:weakSelf.view.superview];
-        }
-        else if (panGestureRecognizer.state == UIGestureRecognizerStatePossible || panGestureRecognizer.state == UIGestureRecognizerStateEnded || panGestureRecognizer.state == UIGestureRecognizerStateCancelled) {
-            
-            // 通知的位置只要往上超過自身高度的 1 / 3 就往上收回去, 否則就往下彈
-            if (weakSelf.view.frame.origin.y <= -CGRectGetHeight(weakSelf.view.bounds) / 3) {
-                [weakSelf dismiss];
-            }
-            else {
-                [weakSelf show];
-            }
-            return;
+        
+        // pan 狀態為 Began 時, 紀錄第一個點
+        // 為 Possible, Ended, Cancelled 實作結束動畫
+        switch (panGestureRecognizer.state) {
+            case UIGestureRecognizerStateBegan:
+                weakSelf.previousLocation = [panGestureRecognizer locationInView:weakSelf.view.superview];
+                break;
+                
+            case UIGestureRecognizerStatePossible:
+            case UIGestureRecognizerStateEnded:
+            case UIGestureRecognizerStateCancelled:
+                
+                // 通知的位置只要往上超過自身高度的 1 / 3 就往上收回去, 否則就往下彈
+                [weakSelf isLessOneThirdOfHeight:weakSelf.view.frame] ? [weakSelf dismiss] : [weakSelf show];
+                return;
+                
+            default:
+                break;
         }
         
+        // 移動後的中心點
         CGPoint currentLocation = [panGestureRecognizer locationInView:weakSelf.view.superview];
-        CGFloat deltaY = currentLocation.y - previousLocation.y;
-        CGPoint newCenter = weakSelf.view.center;
-        newCenter.y += deltaY;
-        if (newCenter.y >= CGRectGetHeight(weakSelf.view.bounds) / 2) {
-            newCenter.y = CGRectGetHeight(weakSelf.view.bounds) / 2;
-        }
-        weakSelf.view.center = newCenter;
-        objc_setAssociatedObject(weakSelf, _cmd, [NSValue valueWithCGPoint:currentLocation], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        weakSelf.view.center = [weakSelf notificationFixedCenter:weakSelf.view currentLocation:currentLocation previousLocation:self.previousLocation];
+        
+        // 記錄這次 pan 位置
+        weakSelf.previousLocation = currentLocation;
     });
 }
 
@@ -159,15 +159,8 @@
 - (void)show {
     __weak DaiNotificationOperation *weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIView *view = weakSelf.view;
-        CGFloat screenWidth = CGRectGetWidth([UIScreen mainScreen].bounds);
-        CGFloat viewWidth = CGRectGetWidth(view.bounds);
-        CGFloat gapToLeft = (screenWidth - viewWidth) / 2;
-        
         [UIView animateWithDuration:0.5f delay:0 usingSpringWithDamping:0.55f initialSpringVelocity:0.55f options:UIViewAnimationOptionAllowUserInteraction | UIViewAnimationOptionCurveEaseInOut animations: ^{
-            CGRect animationFrame = view.frame;
-            animationFrame.origin = CGPointMake(gapToLeft, 0);
-            view.frame = animationFrame;
+            weakSelf.view.frame = [weakSelf notificationShowFrame:weakSelf.view.frame];
         } completion: ^(BOOL finished) {
             [weakSelf performSelector:@selector(dismiss) withObject:nil afterDelay:weakSelf.duration];
         }];
@@ -178,16 +171,8 @@
 - (void)dismiss {
     __weak DaiNotificationOperation *weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIView *view = weakSelf.view;
-        CGFloat screenWidth = CGRectGetWidth([UIScreen mainScreen].bounds);
-        CGFloat viewWidth = CGRectGetWidth(view.bounds);
-        CGFloat viewHeight = CGRectGetHeight(view.bounds);
-        CGFloat gapToLeft = (screenWidth - viewWidth) / 2;
-        
         [UIView animateWithDuration:0.5f delay:0 options:UIViewAnimationOptionAllowUserInteraction | UIViewAnimationOptionCurveEaseInOut animations: ^{
-            CGRect animationFrame = view.frame;
-            animationFrame.origin = CGPointMake(gapToLeft, -viewHeight);
-            view.frame = animationFrame;
+            weakSelf.view.frame = [weakSelf notificationDismissFrame:weakSelf.view.frame];
         } completion: ^(BOOL finished) {
             [weakSelf operationFinish];
         }];
@@ -243,7 +228,7 @@
     [self show];
 }
 
-#pragma mark - operation status
+#pragma mark - Operation Status
 
 - (void)operationStart {
     self.isFinished = NO;

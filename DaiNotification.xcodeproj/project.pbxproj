@@ -16,6 +16,7 @@
 		1C58AEF81C0BEC85004814E6 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1C58AEF61C0BEC85004814E6 /* LaunchScreen.storyboard */; };
 		1C58AF021C0BEE07004814E6 /* DaiNotification.m in Sources */ = {isa = PBXBuildFile; fileRef = 1C58AF011C0BEE07004814E6 /* DaiNotification.m */; };
 		1C58AF051C0C19DD004814E6 /* DaiNotificationOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 1C58AF041C0C19DD004814E6 /* DaiNotificationOperation.m */; };
+		1CC859811C0D3FDD00AF3A4B /* DaiNotificationOperation+Location.m in Sources */ = {isa = PBXBuildFile; fileRef = 1CC859801C0D3FDD00AF3A4B /* DaiNotificationOperation+Location.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -35,6 +36,8 @@
 		1C58AF011C0BEE07004814E6 /* DaiNotification.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DaiNotification.m; sourceTree = "<group>"; };
 		1C58AF031C0C19DD004814E6 /* DaiNotificationOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DaiNotificationOperation.h; sourceTree = "<group>"; };
 		1C58AF041C0C19DD004814E6 /* DaiNotificationOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DaiNotificationOperation.m; sourceTree = "<group>"; };
+		1CC8597F1C0D3FDD00AF3A4B /* DaiNotificationOperation+Location.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "DaiNotificationOperation+Location.h"; sourceTree = "<group>"; };
+		1CC859801C0D3FDD00AF3A4B /* DaiNotificationOperation+Location.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "DaiNotificationOperation+Location.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -98,6 +101,8 @@
 				1C0C9A831C0C51C000332A8F /* DaiNotificationWindow.m */,
 				1C58AF031C0C19DD004814E6 /* DaiNotificationOperation.h */,
 				1C58AF041C0C19DD004814E6 /* DaiNotificationOperation.m */,
+				1CC8597F1C0D3FDD00AF3A4B /* DaiNotificationOperation+Location.h */,
+				1CC859801C0D3FDD00AF3A4B /* DaiNotificationOperation+Location.m */,
 			);
 			path = DaiNotification;
 			sourceTree = "<group>";
@@ -175,6 +180,7 @@
 			files = (
 				1C58AEF01C0BEC85004814E6 /* ViewController.m in Sources */,
 				1C58AF051C0C19DD004814E6 /* DaiNotificationOperation.m in Sources */,
+				1CC859811C0D3FDD00AF3A4B /* DaiNotificationOperation+Location.m in Sources */,
 				1C58AF021C0BEE07004814E6 /* DaiNotification.m in Sources */,
 				1C58AEED1C0BEC85004814E6 /* AppDelegate.m in Sources */,
 				1C58AEEA1C0BEC85004814E6 /* main.m in Sources */,

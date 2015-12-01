@@ -14,17 +14,31 @@
 
 #pragma mark - Class Method
 
++ (void)show:(UIView *(^)(void))view notificationDuration:(NSTimeInterval)duration whenClicked:(void (^)(void))clicked {
+    [self show:view notificationDuration:duration whenClicked:clicked];
+}
+
 + (void)show:(UIView *(^)(void))view notificationDuration:(NSTimeInterval)duration whenClicked:(void (^)(void))clicked delayForNext:(NSTimeInterval)delay {
+    
+    if (!view) {
+        NSLog(@"View 為必要創建元件");
+        return;
+    }
+    
     NSMapTable *newMapTable = [NSMapTable mapTableWithKeyOptions:NSPointerFunctionsCopyIn valueOptions:NSPointerFunctionsCopyIn];
     [newMapTable setObject:view forKey:@"view"];
     [newMapTable setObject:@(duration) forKey:@"duration"];
-    [newMapTable setObject:clicked forKey:@"clicked"];
+    if (!clicked) {
+        [newMapTable setObject:clicked forKey:@"clicked"];
+    }
     
-    DaiNotificationOperation *newOperation = [[DaiNotificationOperation alloc] initWithMapTable:newMapTable];
-    [[self notificationQueue] addOperation:newOperation];
-    [[self notificationQueue] addOperationWithBlock: ^{
-        [NSThread sleepForTimeInterval:delay];
-    }];
+    // 加入 operation queue
+    [[self notificationQueue] addOperation:[[DaiNotificationOperation alloc] initWithMapTable:newMapTable]];
+    if (delay > 0) {
+        [[self notificationQueue] addOperationWithBlock: ^{
+            [NSThread sleepForTimeInterval:delay];
+        }];
+    }
 }
 
 #pragma mark - Runtime Object

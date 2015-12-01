@@ -10,13 +10,13 @@
 
 @implementation DaiNotificationWindow
 
-#pragma mark - method to override
+#pragma mark - Method to Override
 
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
     return [self.eventDelegate shouldHandleTouchAtPoint:point];
 }
 
-#pragma mark - life cycle
+#pragma mark - Life Cycle
 
 - (id)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
